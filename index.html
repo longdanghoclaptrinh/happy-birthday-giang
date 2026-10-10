@@ -289,121 +289,77 @@
   .sound.playing { animation: pulse 1.6s ease-in-out infinite; }
   @keyframes pulse { 50% { box-shadow: 0 0 0 10px rgba(255,126,179,.2), 0 8px 24px -6px rgba(80,40,90,.4); } }
 
-  /* ---------- Màn kết ---------- */
-  .finale { overflow-y: auto; justify-content: flex-start; padding-top: 4vh; padding-bottom: 80px; }
-
-  /* Lời chúc bố mẹ hiện sau khi thổi nến */
-  .parent-wish-card {
-    width: 100%; max-width: 720px;
-    background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(255,240,245,.92));
-    border-radius: 28px; padding: 36px 28px 30px;
-    box-shadow: 0 30px 60px -28px rgba(80,40,90,.45);
-    backdrop-filter: blur(12px);
-    margin-top: 22px;
-    display: none;
-    position: relative;
-    overflow: hidden;
+  /* ---------- Màn kết: vừa khít 1 màn hình, không cần cuộn ---------- */
+  .finale {
+    overflow: hidden; justify-content: flex-start;
+    padding: max(14px, env(safe-area-inset-top)) 16px max(12px, env(safe-area-inset-bottom));
+    gap: clamp(6px, 1.6vh, 16px);
   }
-  .parent-wish-card::before {
-    content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 3px;
-    background: linear-gradient(135deg, var(--coral), var(--pink), var(--grape), var(--sky), var(--mint));
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor; mask-composite: exclude;
-  }
-  .parent-wish-card.show-wish, .family-wish-card.show-wish { display: block; animation: cardIn .9s cubic-bezier(.2,1.2,.4,1) both; }
-  @keyframes cardIn { from { opacity: 0; transform: translateY(40px) scale(.94); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
-  .parent-wish-card .pw-icon { font-size: 42px; margin-bottom: 10px; }
-  .parent-wish-card .pw-title {
-    font-family: "Baloo 2", sans-serif; font-weight: 800;
-    font-size: clamp(20px, 3.5vw, 30px);
-    background: linear-gradient(90deg, var(--coral), var(--pink), var(--grape));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    margin-bottom: 14px;
-  }
-  .parent-wish-card .pw-text {
-    font-family: "Dancing Script", cursive; font-weight: 600;
-    font-size: clamp(18px, 3vw, 26px); line-height: 1.7;
-    color: var(--ink);
-  }
-  .parent-wish-card .pw-sig {
-    margin-top: 16px; font-weight: 700; color: var(--grape); font-size: 16px;
-  }
-
-  .family-wish-card {
-    width: 100%; max-width: 720px;
-    background: linear-gradient(145deg, rgba(255,255,255,.92), rgba(240,255,245,.92));
-    border-radius: 28px; padding: 36px 28px 30px;
-    box-shadow: 0 30px 60px -28px rgba(40,90,80,.4);
-    backdrop-filter: blur(12px);
-    margin-top: 18px;
-    display: none;
-    position: relative;
-    overflow: hidden;
-  }
-  .family-wish-card::before {
-    content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 3px;
-    background: linear-gradient(135deg, var(--mint), var(--sky), var(--sun), var(--grape));
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor; mask-composite: exclude;
-  }
-  .family-wish-card .fw-icon { font-size: 42px; margin-bottom: 10px; }
-  .family-wish-card .fw-title {
-    font-family: "Baloo 2", sans-serif; font-weight: 800;
-    font-size: clamp(20px, 3.5vw, 30px);
-    background: linear-gradient(90deg, var(--mint), var(--sky), var(--grape));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    margin-bottom: 14px;
-  }
-  .family-wish-card .fw-text {
-    font-family: "Dancing Script", cursive; font-weight: 600;
-    font-size: clamp(18px, 3vw, 26px); line-height: 1.7;
-    color: var(--ink);
-  }
-  .family-wish-card .fw-sig {
-    margin-top: 16px; font-weight: 700; color: var(--mint); font-size: 16px;
-  }
-  .finale .inner-wrap { width: 100%; max-width: 820px; margin: auto; display: flex; flex-direction: column; align-items: center; }
-  .collage {
-    display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
-    width: min(100%, 560px); margin-bottom: 26px;
-  }
-  .collage img {
-    width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px;
-    border: 3px solid #fff; box-shadow: 0 8px 18px -10px rgba(80,40,90,.5);
-    opacity: 0; transform: scale(.6) rotate(var(--r, 0deg));
-  }
-  .finale.go .collage img { animation: pop .7s cubic-bezier(.2, 1.4, .4, 1) forwards; animation-delay: calc(2.5s + var(--i) * 70ms); }
-  @keyframes pop { to { opacity: 1; transform: scale(1) rotate(var(--r, 0deg)); } }
-
-  .cake-wrap { position: relative; width: 170px; height: 170px; cursor: pointer; margin: 26px 0 4px; }
-  .flame { transform-origin: 50% 100%; animation: flicker .25s ease-in-out infinite alternate; transition: opacity .4s ease; }
-  .cake-wrap.blown .flame { opacity: 0; }
-  @keyframes flicker { from { transform: scale(1, 1) rotate(-3deg); } to { transform: scale(.9, 1.12) rotate(3deg); } }
-  .hint { font-size: 13px; color: var(--ink-soft); margin-bottom: 18px; }
-
   .final-title {
+    flex: none;
     font-family: "Baloo 2", sans-serif; font-weight: 800;
-    font-size: clamp(30px, 6vw, 56px); line-height: 1.05;
+    font-size: clamp(28px, min(5.5vw, 7vh), 56px); line-height: 1.05;
     background: linear-gradient(90deg, var(--coral), var(--pink), var(--grape), var(--sky));
     -webkit-background-clip: text; background-clip: text; color: transparent;
-    margin-bottom: 18px;
   }
-  .message-card {
-    position: relative; width: 100%;
-    background: rgba(255,255,255,.88);
-    border-radius: 28px; padding: 34px 26px 30px;
+
+  /* "Sân khấu" lời chúc: các thẻ nằm chồng ở cùng một chỗ, thay nhau xuất hiện */
+  .wish-deck {
+    flex: 1 1 auto; min-height: 0; width: 100%; max-width: 760px;
+    display: grid; align-items: center; position: relative;
+  }
+  .deck-card {
+    grid-area: 1 / 1; position: relative; width: 100%;
+    max-height: 100%; overflow: hidden;
+    border-radius: 28px; padding: clamp(18px, 3.4vh, 34px) clamp(16px, 3vw, 30px);
+    background: rgba(255,255,255,.9);
     box-shadow: 0 30px 60px -28px rgba(80,40,90,.45);
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(12px);
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity .9s ease, transform 1s cubic-bezier(.22,.9,.24,1), filter .9s ease, visibility 1s;
   }
-  .message-card::before {
+  .deck-card::before {
     content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 3px;
     background: linear-gradient(135deg, var(--coral), var(--sun), var(--mint), var(--sky), var(--grape));
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor; mask-composite: exclude;
   }
+  .deck-card.is-active { opacity: 1; visibility: visible; pointer-events: auto; transform: none; filter: none; }
+  /* trạng thái rời đi / chờ vào */
+  .deck-card.out-zoom  { transform: scale(.85); filter: blur(8px); }
+  .deck-card.out-left  { transform: translateX(-110%) rotate(-4deg); }
+  .deck-card.in-zoom   { transform: scale(.7); filter: blur(10px); }
+  .deck-card.in-right  { transform: translateX(110%) rotate(4deg); }
+
+  .parent-wish-card { background: linear-gradient(145deg, rgba(255,255,255,.94), rgba(255,236,244,.94)); }
+  .parent-wish-card::before { background: linear-gradient(135deg, var(--coral), var(--pink), var(--grape), var(--sky), var(--mint)); }
+  .family-wish-card { background: linear-gradient(145deg, rgba(255,255,255,.94), rgba(234,255,244,.94)); }
+  .family-wish-card::before { background: linear-gradient(135deg, var(--mint), var(--sky), var(--sun), var(--grape)); }
+
+  .pw-icon, .fw-icon { font-size: clamp(26px, 4.5vh, 42px); line-height: 1; margin-bottom: 6px; }
+  .pw-title, .fw-title {
+    font-family: "Baloo 2", sans-serif; font-weight: 800;
+    font-size: clamp(20px, min(3.4vw, 4vh), 30px); margin-bottom: clamp(4px, 1.2vh, 12px);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .pw-title { background-image: linear-gradient(90deg, var(--coral), var(--pink), var(--grape)); }
+  .fw-title { background-image: linear-gradient(90deg, #12b886, var(--sky), var(--grape)); }
+  .pw-text, .fw-text {
+    font-family: "Dancing Script", cursive; font-weight: 700;
+    font-size: clamp(19px, min(3vw, 3.4vh), 28px); line-height: 1.5; color: var(--ink);
+  }
+  .pw-text p + p, .fw-text p + p { margin-top: .45em; }
+  .pw-sig, .fw-sig { margin-top: clamp(6px, 1.6vh, 16px); font-weight: 700; font-size: 16px; }
+  .pw-sig { color: var(--grape); }
+  .fw-sig { color: #12b886; }
+
+  /* chữ của thẻ đang hiện lần lượt bay vào */
+  .deck-card .line { opacity: 0; transform: translateY(12px); }
+  .deck-card.is-active .line { animation: wordIn .8s ease forwards; animation-delay: calc(.5s + var(--i, 0) * .35s); }
+
   .final-line {
     font-family: "Dancing Script", cursive; font-weight: 700;
-    font-size: clamp(28px, 5vw, 44px); line-height: 1.3; color: var(--ink);
+    font-size: clamp(26px, min(4.6vw, 6vh), 44px); line-height: 1.3; color: var(--ink);
   }
   .final-line .w { display: inline-block; opacity: 0; transform: translateY(14px); filter: blur(4px); }
   .finale.go .final-line .w { animation: wordIn .8s ease forwards; animation-delay: calc(1.2s + var(--i) * 110ms); }
@@ -412,23 +368,58 @@
   .signature { margin-top: 14px; font-weight: 600; color: var(--grape); opacity: 0; }
   .finale.go .signature { animation: wordIn .8s ease forwards; animation-delay: 4.4s; }
 
-  .wishes { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; width: 100%; margin-top: 26px; }
-  .wish {
-    background: #fff; border-radius: 20px; padding: 18px 18px 16px; text-align: left;
-    box-shadow: 0 14px 30px -20px rgba(80,40,90,.5);
-    border-top: 5px solid var(--c, var(--pink));
-    opacity: 0; transform: translateY(20px);
+  /* chấm chuyển lời chúc */
+  .deck-dots { flex: none; display: flex; gap: 8px; justify-content: center; }
+  .deck-dots button {
+    width: 10px; height: 10px; border-radius: 99px; border: 0; cursor: pointer; padding: 0;
+    background: rgba(151,117,250,.3); transition: width .4s ease, background .4s ease;
   }
-  .finale.go .wish { animation: wordIn .8s ease forwards; animation-delay: calc(5s + var(--i) * 200ms); }
-  .wish .who { font-family: "Baloo 2", sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 4px; }
-  .wish p { font-size: 15px; line-height: 1.6; color: var(--ink-soft); }
-  .actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 28px; opacity: 0; }
-  .finale.go .actions { animation: wordIn .8s ease forwards; animation-delay: 6.2s; }
+  .deck-dots button.cur { width: 30px; background: linear-gradient(90deg, var(--coral), var(--grape)); }
+  .deck-dots button:disabled { cursor: default; opacity: .4; }
+
+  /* bánh kem */
+  .cake-row { flex: none; display: flex; align-items: center; gap: 14px; justify-content: center; }
+  .cake-wrap { position: relative; width: clamp(80px, 14vh, 140px); aspect-ratio: 1; cursor: pointer; transition: transform .25s ease; }
+  .cake-wrap:hover { transform: scale(1.06); }
+  .cake-wrap svg { width: 100%; height: 100%; display: block; }
+  .flame { transform-origin: 50% 100%; animation: flicker .25s ease-in-out infinite alternate; transition: opacity .4s ease; }
+  .cake-wrap.blown .flame { opacity: 0; }
+  @keyframes flicker { from { transform: scale(1, 1) rotate(-3deg); } to { transform: scale(.9, 1.12) rotate(3deg); } }
+  .hint {
+    font-size: 14px; font-weight: 600; color: var(--ink-soft); text-align: left; max-width: 220px;
+    padding: 8px 14px; border-radius: 16px; background: rgba(255,255,255,.65); backdrop-filter: blur(8px);
+  }
+  .cake-wrap:not(.blown) + .hint { animation: nudge 1.6s ease-in-out infinite; }
+  @keyframes nudge { 50% { transform: translateX(-6px); } }
+
+  /* dải ảnh chạy ngang */
+  .strip {
+    flex: none; width: 100vw; overflow: hidden; height: clamp(52px, 9vh, 84px);
+    -webkit-mask: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+            mask: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+  .strip-track { display: flex; gap: 10px; height: 100%; width: max-content; animation: marquee 40s linear infinite; }
+  .strip-track img {
+    height: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 14px;
+    border: 3px solid #fff; box-shadow: 0 6px 14px -8px rgba(80,40,90,.5);
+  }
+  @keyframes marquee { to { transform: translateX(-50%); } }
+
+  .actions { flex: none; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; opacity: 0; }
+  .finale.go .actions { animation: wordIn .8s ease forwards; animation-delay: 5s; }
+  .actions .btn { font-size: 17px; padding: 10px 24px; }
+
+  @media (max-height: 700px) { .strip { display: none; } }
+  @media (max-width: 560px) {
+    .actions { padding-right: 56px; }
+    .actions .btn { font-size: 15px; padding: 9px 16px; }
+    .hint { font-size: 13px; max-width: 170px; }
+    .deck-card { border-radius: 22px; }
+  }
 
   @media (max-width: 560px) {
     .frame { padding: 7px; border-radius: 20px; }
     .frame .inner { border-radius: 14px; }
-    .collage { grid-template-columns: repeat(5, 1fr); gap: 5px; }
     .deco { --s: 46px !important; opacity: .55; }
     .deco.mid { display: none; }
     .message-card { padding: 26px 16px 22px; }
@@ -540,18 +531,50 @@
   <div class="dots" id="dots"></div>
 </section>
 
-<!-- MÀN HÌNH 3: LỜI CHÚC CUỐI -->
+<!-- MÀN HÌNH 3: LỜI CHÚC CUỐI (vừa 1 màn hình, các lời chúc thay nhau ở giữa) -->
 <section class="screen finale hidden" id="finale">
-  <div class="inner-wrap">
-    <div class="final-title">Chúc mừng sinh nhật em!</div>
+  <div class="final-title">Chúc mừng sinh nhật em!</div>
 
-    <div class="message-card">
+  <div class="wish-deck" id="wishDeck">
+    <!-- 1. Lời chúc của anh Long -->
+    <div class="deck-card message-card is-active" id="longWish">
       <div class="final-line" id="finalLine"></div>
       <div class="signature">— Anh Long 💙</div>
     </div>
 
+    <!-- 2. Lời chúc của bố mẹ (hiện ở giữa ngay khi thổi nến) -->
+    <div class="deck-card parent-wish-card in-zoom" id="parentWish">
+      <div class="pw-icon line" style="--i:0">👨‍👩‍👦</div>
+      <div class="pw-title line" style="--i:0">Lời Chúc Từ Bố Mẹ</div>
+      <div class="pw-text">
+        <p class="line" style="--i:1">Chúc mừng sinh nhật chàng trai của mẹ&nbsp;💖</p>
+        <p class="line" style="--i:2">Chúc con sinh nhật vui vẻ, mạnh khoẻ, hạnh phúc, thành công.</p>
+        <p class="line" style="--i:3">Tuổi 19 bố mẹ chúc con luôn vững vàng bản lĩnh, gặt hái nhiều thành công trên con đường trưởng thành và luôn là niềm tự hào của gia đình&nbsp;🌟</p>
+      </div>
+      <div class="pw-sig line" style="--i:4">— Bố &amp; Mẹ yêu thương ❤️</div>
+    </div>
+
+    <!-- 3. Lời chúc của đại gia đình (trượt từ phải sang thế chỗ) -->
+    <div class="deck-card family-wish-card in-right" id="familyWish">
+      <div class="fw-icon line" style="--i:0">👨‍👩‍👧‍👦</div>
+      <div class="fw-title line" style="--i:0">Lời Chúc Từ Đại Gia Đình</div>
+      <div class="fw-text">
+        <p class="line" style="--i:1">Chúc Giang tuổi mới thật rực rỡ, gặt hái thật nhiều niềm vui, thành công và những người bạn tốt&nbsp;🎉</p>
+        <p class="line" style="--i:2">Cả nhà luôn ở bên và tự hào về em!&nbsp;🥰</p>
+      </div>
+      <div class="fw-sig line" style="--i:3">— Đại gia đình 💙</div>
+    </div>
+  </div>
+
+  <div class="deck-dots" id="deckDots" aria-label="Chọn lời chúc">
+    <button class="cur" data-i="0" aria-label="Lời chúc của anh Long"></button>
+    <button data-i="1" aria-label="Lời chúc của bố mẹ" disabled></button>
+    <button data-i="2" aria-label="Lời chúc của đại gia đình" disabled></button>
+  </div>
+
+  <div class="cake-row">
     <div class="cake-wrap" id="cake" title="Bấm để thổi nến">
-      <svg viewBox="0 0 170 170" width="170" height="170" aria-hidden="true">
+      <svg viewBox="0 0 170 170" aria-hidden="true">
         <ellipse cx="85" cy="156" rx="76" ry="10" fill="#e5dbff"/>
         <rect x="18" y="104" width="134" height="50" rx="12" fill="#ff7eb3"/>
         <path d="M18 116c10 14 22 0 33 10s22-6 34 2s22-6 33 2s24-4 34-10v-6H18z" fill="#fff5f9"/>
@@ -568,37 +591,14 @@
         </g>
       </svg>
     </div>
-    <div class="hint" id="cakeHint">Bấm vào bánh để thổi nến & ước một điều nhé 🕯️</div>
+    <div class="hint" id="cakeHint">👈 Bấm vào bánh để thổi nến &amp; ước một điều nhé 🕯️</div>
+  </div>
 
-    <!-- Lời chúc bố mẹ (hiện sau khi thổi nến) -->
-    <div class="parent-wish-card" id="parentWish">
-      <div class="pw-icon">👨‍👩‍👦</div>
-      <div class="pw-title">Lời Chúc Từ Bố Mẹ</div>
-      <div class="pw-text">
-        Chúc mừng sinh nhật chàng trai của mẹ&nbsp;💖<br><br>
-        Chúc con sinh nhật vui vẻ, mạnh khoẻ, hạnh phúc, thành công.<br><br>
-        Tuổi 19 bố mẹ chúc con luôn vững vàng bản lĩnh, gặt hái nhiều thành công trên con đường trưởng thành và luôn là niềm tự hào của gia đình&nbsp;🌟
-      </div>
-      <div class="pw-sig">— Bố & Mẹ yêu thương ❤️</div>
-    </div>
+  <div class="strip"><div class="strip-track" id="strip"></div></div>
 
-    <!-- Lời chúc đại gia đình (hiện sau bố mẹ) -->
-    <div class="family-wish-card" id="familyWish">
-      <div class="fw-icon">👨‍👩‍👧‍👦</div>
-      <div class="fw-title">Lời Chúc Từ Đại Gia Đình</div>
-      <div class="fw-text">
-        Chúc Giang tuổi mới thật rực rỡ, gặt hái thật nhiều niềm vui, thành công và những người bạn tốt&nbsp;🎉<br><br>
-        Cả nhà luôn ở bên và tự hào về em!&nbsp;🥰
-      </div>
-      <div class="fw-sig">— Đại gia đình 💙</div>
-    </div>
-
-    <div class="collage" id="collage"></div>
-
-    <div class="actions">
-      <button class="btn" id="replayBtn">🔁 Xem lại từ đầu</button>
-      <button class="btn ghost" id="confettiBtn">🎊 Bắn pháo giấy</button>
-    </div>
+  <div class="actions">
+    <button class="btn" id="replayBtn">🔁 Xem lại</button>
+    <button class="btn ghost" id="confettiBtn">🎊 Pháo giấy</button>
   </div>
 </section>
 
@@ -847,13 +847,12 @@ window.addEventListener("keydown", (e) => {
 
 /* ---------- Màn kết ---------- */
 (function buildFinale() {
-  const col = $("#collage");
-  SLIDES.forEach((s, i) => {
+  // dải ảnh chạy ngang (nhân đôi để chạy vòng liền mạch)
+  const strip = $("#strip");
+  [...SLIDES, ...SLIDES].forEach((s) => {
     const im = document.createElement("img");
     im.src = s.src; im.alt = ""; im.loading = "lazy";
-    im.style.setProperty("--i", i);
-    im.style.setProperty("--r", ((i * 37) % 11 - 5) + "deg");
-    col.appendChild(im);
+    strip.appendChild(im);
   });
   const line = $("#finalLine");
   const highlight = ["học", "tập", "thật", "tốt", "thành", "công"];
@@ -867,12 +866,58 @@ window.addEventListener("keydown", (e) => {
   });
 })();
 
+/* Các thẻ lời chúc thay nhau ở giữa màn hình:
+   0 = anh Long, 1 = bố mẹ (phóng ra ở giữa), 2 = đại gia đình (trượt từ phải sang) */
+const DECK = [$("#longWish"), $("#parentWish"), $("#familyWish")];
+const IN_FROM = ["in-zoom", "in-zoom", "in-right"];
+const FAMILY_DELAY = 9000;   // thời gian đọc lời chúc bố mẹ trước khi đại gia đình trượt vào
+let deckIdx = 0, deckTimer = null;
+
+function goWish(n) {
+  if (n === deckIdx) return;
+  const cur = DECK[deckIdx], next = DECK[n];
+  const forward = n > deckIdx;
+  // thẻ cũ rời đi: bố mẹ thay anh Long thì thu nhỏ mờ dần, còn lại trượt sang trái
+  cur.classList.remove("is-active");
+  cur.classList.add(forward ? (n === 1 ? "out-zoom" : "out-left") : "in-right");
+  // thẻ mới: đặt sẵn ở vị trí xuất phát (không hiệu ứng) rồi mới cho chạy vào
+  next.style.transition = "none";
+  next.classList.remove("out-zoom", "out-left", "in-zoom", "in-right");
+  next.classList.add(forward ? IN_FROM[n] : "out-left");
+  void next.offsetWidth;
+  next.style.transition = "";
+  next.classList.remove("out-zoom", "out-left", "in-zoom", "in-right");
+  next.classList.add("is-active");
+  deckIdx = n;
+  [...$("#deckDots").children].forEach((d, k) => d.classList.toggle("cur", k === n));
+}
+
+function resetDeck() {
+  clearTimeout(deckTimer);
+  DECK.forEach((c, k) => {
+    c.style.transition = "none";
+    c.classList.remove("is-active", "out-zoom", "out-left", "in-zoom", "in-right");
+    c.classList.add(k === 0 ? "is-active" : IN_FROM[k]);
+    void c.offsetWidth;
+    c.style.transition = "";
+  });
+  deckIdx = 0;
+  [...$("#deckDots").children].forEach((d, k) => { d.classList.toggle("cur", k === 0); d.disabled = k > 0; });
+  $("#cake").classList.remove("blown");
+  $("#cakeHint").innerHTML = "👈 Bấm vào bánh để thổi nến &amp; ước một điều nhé 🕯️";
+}
+
+[...$("#deckDots").children].forEach((d) => d.addEventListener("click", () => {
+  clearTimeout(deckTimer);
+  goWish(+d.dataset.i);
+}));
+
 function showFinale() {
   running = false;
   clearTimeout(timer);
+  resetDeck();
   show.classList.add("hidden");
   finale.classList.remove("hidden");
-  finale.scrollTop = 0;
   finale.classList.remove("go"); void finale.offsetWidth; finale.classList.add("go");
   confetti.burst(220);
   setTimeout(() => confetti.burst(160), 1800);
@@ -881,36 +926,21 @@ function showFinale() {
 
 $("#cake").addEventListener("click", () => {
   const c = $("#cake");
-  if (c.classList.contains("blown")) {
-    c.classList.remove("blown");
-    $("#cakeHint").textContent = "Bấm vào bánh để thổi nến & ước một điều nhé 🕯️";
-    $("#parentWish").classList.remove("show-wish");
-    $("#familyWish").classList.remove("show-wish");
-    return;
-  }
+  if (c.classList.contains("blown")) { resetDeck(); return; }   // thắp lại nến
   c.classList.add("blown");
   $("#cakeHint").textContent = "Điều ước của em chắc chắn sẽ thành hiện thực! 🌟";
   confetti.burst(180);
-  // Hiện lời chúc bố mẹ sau 0.8s
-  setTimeout(() => {
-    $("#parentWish").classList.add("show-wish");
-    confetti.burst(100);
-  }, 800);
-  // Hiện lời chúc đại gia đình sau 2.5s
-  setTimeout(() => {
-    $("#familyWish").classList.add("show-wish");
-    confetti.burst(120);
-    // Scroll to family wish
-    $("#familyWish").scrollIntoView({ behavior: "smooth", block: "center" });
-  }, 2500);
+  [...$("#deckDots").children].forEach((d) => (d.disabled = false));
+  // lời chúc bố mẹ hiện ngay ở giữa, thay chỗ lời chúc của anh Long
+  setTimeout(() => { goWish(1); confetti.burst(100); }, 600);
+  // sau đó lời chúc đại gia đình trượt từ phải sang thế chỗ
+  deckTimer = setTimeout(() => { goWish(2); confetti.burst(120); }, 600 + FAMILY_DELAY);
 });
 $("#confettiBtn").addEventListener("click", () => confetti.burst(220));
 $("#replayBtn").addEventListener("click", () => {
   finale.classList.add("hidden");
   finale.classList.remove("go");
-  $("#cake").classList.remove("blown");
-  $("#parentWish").classList.remove("show-wish");
-  $("#familyWish").classList.remove("show-wish");
+  resetDeck();
   show.classList.remove("hidden");
   music.start();
   runShow();
