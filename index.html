@@ -84,6 +84,18 @@
   }
   .fw-veil.on { opacity: 1; }
   .fw-veil .flash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+  /* dòng chữ phát sáng giữa bầu trời pháo hoa */
+  .fw-msg {
+    position: absolute; left: 50%; top: 58%; transform: translate(-50%, -50%) scale(.85);
+    width: 92vw; text-align: center; opacity: 0;
+    font-family: "Baloo 2", sans-serif; font-weight: 800; line-height: 1.05;
+    font-size: clamp(34px, 7.5vw, 88px); color: #fff;
+    text-shadow: 0 0 18px rgba(255,126,179,.9), 0 0 42px rgba(151,117,250,.8), 0 0 80px rgba(77,171,247,.6);
+  }
+  .fw-msg span { display: block; font-family: "Dancing Script", cursive; font-size: .7em; color: #ffe066;
+    text-shadow: 0 0 16px rgba(255,212,59,.9), 0 0 40px rgba(255,146,43,.7); }
+  .fw-veil.on .fw-msg { animation: msgIn 1.4s 1.2s cubic-bezier(.2,1.2,.4,1) forwards; }
+  @keyframes msgIn { to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
   canvas#fireworks { position: fixed; inset: 0; z-index: 26; pointer-events: none; }
 
   /* ---------- Màn hình mở đầu ---------- */
@@ -365,18 +377,18 @@
 
   /* chữ của thẻ đang hiện lần lượt bay vào */
   .deck-card .line { opacity: 0; transform: translateY(12px); }
-  .deck-card.is-active .line { animation: wordIn .8s ease forwards; animation-delay: calc(.5s + var(--i, 0) * .35s); }
+  .deck-card.is-active .line { animation: wordIn .6s ease forwards; animation-delay: calc(.15s + var(--i, 0) * .18s); }
 
   .final-line {
     font-family: "Dancing Script", cursive; font-weight: 700;
     font-size: clamp(26px, min(4.6vw, 6vh), 44px); line-height: 1.3; color: var(--ink);
   }
   .final-line .w { display: inline-block; opacity: 0; transform: translateY(14px); filter: blur(4px); }
-  .finale.go .final-line .w { animation: wordIn .8s ease forwards; animation-delay: calc(1.2s + var(--i) * 110ms); }
+  .deck-card.is-active .final-line .w { animation: wordIn .6s ease forwards; animation-delay: calc(.2s + var(--i) * 45ms); }
   @keyframes wordIn { to { opacity: 1; transform: none; filter: none; } }
   .final-line .hl { color: var(--coral); }
   .signature { margin-top: 14px; font-weight: 600; color: var(--grape); opacity: 0; }
-  .finale.go .signature { animation: wordIn .8s ease forwards; animation-delay: 4.4s; }
+  .deck-card.is-active .signature { animation: wordIn .6s ease forwards; animation-delay: 1.1s; }
 
   /* chấm chuyển lời chúc */
   .deck-dots { flex: none; display: flex; gap: 8px; justify-content: center; }
@@ -389,6 +401,17 @@
 
   /* bánh kem */
   .cake-row { flex: none; display: flex; align-items: center; gap: 14px; justify-content: center; }
+  /* Trước khi thổi nến: chỉ có chiếc bánh thật to ở giữa màn hình */
+  .finale:not(.wishing) .wish-deck, .finale:not(.wishing) .deck-dots { display: none; }
+  .finale:not(.wishing) .cake-row { flex: 1 1 auto; min-height: 0; flex-direction: column; gap: clamp(10px, 2.5vh, 22px); }
+  .finale:not(.wishing) .cake-wrap { width: clamp(170px, 42vh, 330px); }
+  .finale:not(.wishing) .cake-wrap::after {
+    content: ""; position: absolute; inset: 8% 8% 18%; z-index: -1; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,212,59,.55), rgba(255,126,179,.25) 55%, transparent 70%);
+    animation: glow 2.2s ease-in-out infinite;
+  }
+  @keyframes glow { 50% { transform: scale(1.12); opacity: .7; } }
+  .finale:not(.wishing) .hint { text-align: center; max-width: 380px; font-size: clamp(15px, 2.4vh, 19px); }
   .cake-wrap { position: relative; width: clamp(80px, 14vh, 140px); aspect-ratio: 1; cursor: pointer; transition: transform .25s ease; }
   .cake-wrap:hover { transform: scale(1.06); }
   .cake-wrap svg { width: 100%; height: 100%; display: block; }
@@ -400,7 +423,7 @@
     padding: 8px 14px; border-radius: 16px; background: rgba(255,255,255,.65); backdrop-filter: blur(8px);
   }
   .cake-wrap:not(.blown) + .hint { animation: nudge 1.6s ease-in-out infinite; }
-  @keyframes nudge { 50% { transform: translateX(-6px); } }
+  @keyframes nudge { 50% { transform: translateY(-5px) scale(1.03); } }
 
   /* dải ảnh chạy ngang */
   .strip {
@@ -546,13 +569,7 @@
   <div class="final-title">Chúc mừng sinh nhật em!</div>
 
   <div class="wish-deck" id="wishDeck">
-    <!-- 1. Lời chúc của anh Long -->
-    <div class="deck-card message-card is-active" id="longWish">
-      <div class="final-line" id="finalLine"></div>
-      <div class="signature">— Anh Long 💙</div>
-    </div>
-
-    <!-- 2. Lời chúc của bố mẹ (hiện ở giữa ngay khi thổi nến) -->
+    <!-- 1. Lời chúc của bố mẹ (phóng ra ở giữa ngay khi thổi nến) -->
     <div class="deck-card parent-wish-card in-zoom" id="parentWish">
       <div class="pw-icon line" style="--i:0">👨‍👩‍👦</div>
       <div class="pw-title line" style="--i:0">Lời Chúc Từ Bố Mẹ</div>
@@ -564,7 +581,7 @@
       <div class="pw-sig line" style="--i:4">— Bố &amp; Mẹ yêu thương ❤️</div>
     </div>
 
-    <!-- 3. Lời chúc của đại gia đình (trượt từ phải sang thế chỗ) -->
+    <!-- 2. Lời chúc của đại gia đình (trượt từ phải sang thế chỗ) -->
     <div class="deck-card family-wish-card in-right" id="familyWish">
       <div class="fw-icon line" style="--i:0">👨‍👩‍👧‍👦</div>
       <div class="fw-title line" style="--i:0">Lời Chúc Từ Đại Gia Đình</div>
@@ -574,12 +591,18 @@
       </div>
       <div class="fw-sig line" style="--i:3">— Đại gia đình 💙</div>
     </div>
+
+    <!-- 3. Lời chúc của anh Long (trượt từ phải sang, sau đó là pháo hoa) -->
+    <div class="deck-card message-card in-right" id="longWish">
+      <div class="final-line" id="finalLine"></div>
+      <div class="signature">— Anh Long 💙</div>
+    </div>
   </div>
 
   <div class="deck-dots" id="deckDots" aria-label="Chọn lời chúc">
-    <button class="cur" data-i="0" aria-label="Lời chúc của anh Long"></button>
-    <button data-i="1" aria-label="Lời chúc của bố mẹ" disabled></button>
-    <button data-i="2" aria-label="Lời chúc của đại gia đình" disabled></button>
+    <button data-i="0" aria-label="Lời chúc của bố mẹ"></button>
+    <button data-i="1" aria-label="Lời chúc của đại gia đình"></button>
+    <button data-i="2" aria-label="Lời chúc của anh Long"></button>
   </div>
 
   <div class="cake-row">
@@ -601,14 +624,14 @@
         </g>
       </svg>
     </div>
-    <div class="hint" id="cakeHint">👈 Bấm vào bánh để thổi nến &amp; ước một điều nhé 🕯️</div>
+    <div class="hint" id="cakeHint">Bấm vào bánh để thổi nến &amp; ước một điều nhé 🕯️</div>
   </div>
 
   <div class="strip"><div class="strip-track" id="strip"></div></div>
 
   <div class="actions">
     <button class="btn" id="replayBtn">🔁 Xem lại</button>
-    <button class="btn ghost" id="confettiBtn">🎊 Pháo giấy</button>
+    <button class="btn ghost" id="confettiBtn">🎆 Pháo hoa</button>
   </div>
 </section>
 
@@ -876,21 +899,23 @@ window.addEventListener("keydown", (e) => {
   });
 })();
 
-/* Các thẻ lời chúc thay nhau ở giữa màn hình:
-   0 = anh Long, 1 = bố mẹ (phóng ra ở giữa), 2 = đại gia đình (trượt từ phải sang) */
-const DECK = [$("#longWish"), $("#parentWish"), $("#familyWish")];
-const IN_FROM = ["in-zoom", "in-zoom", "in-right"];
-const FAMILY_DELAY = 11500;  // lời chúc bố mẹ -> (pháo hoa) -> đại gia đình trượt vào sau khi pháo hoa tàn
-const FIREWORKS_MS = 7000;   // thời lượng màn pháo hoa
-let deckIdx = 0, deckTimer = null, fwTimer = null;
+/* Màn kết: ban đầu chỉ có bánh sinh nhật. Thổi nến xong, các lời chúc lần lượt thay nhau ở giữa:
+   0 = bố mẹ (phóng ra), 1 = đại gia đình (trượt từ phải), 2 = anh Long (trượt từ phải) -> pháo hoa */
+const DECK = [$("#parentWish"), $("#familyWish"), $("#longWish")];
+const IN_FROM = ["in-zoom", "in-right", "in-right"];
+const WISH_STEP_MS = 2000;    // mỗi lời chúc hiện khoảng 2 giây rồi tới lời tiếp theo
+const FIREWORKS_MS = 10000;   // thời lượng màn pháo hoa cuối cùng
+const CAKE_HINT = "Bấm vào bánh để thổi nến &amp; ước một điều nhé 🕯️";
+let deckIdx = -1, seqTimers = [];
 
 function goWish(n) {
   if (n === deckIdx) return;
   const cur = DECK[deckIdx], next = DECK[n];
   const forward = n > deckIdx;
-  // thẻ cũ rời đi: bố mẹ thay anh Long thì thu nhỏ mờ dần, còn lại trượt sang trái
-  cur.classList.remove("is-active");
-  cur.classList.add(forward ? (n === 1 ? "out-zoom" : "out-left") : "in-right");
+  if (cur) {   // thẻ cũ trượt ra bên trái (hoặc sang phải nếu đang lùi lại)
+    cur.classList.remove("is-active");
+    cur.classList.add(forward ? "out-left" : "in-right");
+  }
   // thẻ mới: đặt sẵn ở vị trí xuất phát (không hiệu ứng) rồi mới cho chạy vào
   next.style.transition = "none";
   next.classList.remove("out-zoom", "out-left", "in-zoom", "in-right");
@@ -904,26 +929,23 @@ function goWish(n) {
 }
 
 function resetDeck() {
-  clearTimeout(deckTimer);
-  clearTimeout(fwTimer);
+  seqTimers.forEach(clearTimeout); seqTimers = [];
   fireworks.stop();
   DECK.forEach((c, k) => {
     c.style.transition = "none";
     c.classList.remove("is-active", "out-zoom", "out-left", "in-zoom", "in-right");
-    c.classList.add(k === 0 ? "is-active" : IN_FROM[k]);
+    c.classList.add(IN_FROM[k]);
     void c.offsetWidth;
     c.style.transition = "";
   });
-  deckIdx = 0;
-  [...$("#deckDots").children].forEach((d, k) => { d.classList.toggle("cur", k === 0); d.disabled = k > 0; });
+  deckIdx = -1;
+  [...$("#deckDots").children].forEach((d) => d.classList.remove("cur"));
+  finale.classList.remove("wishing");
   $("#cake").classList.remove("blown");
-  $("#cakeHint").innerHTML = "👈 Bấm vào bánh để thổi nến &amp; ước một điều nhé 🕯️";
+  $("#cakeHint").innerHTML = CAKE_HINT;
 }
 
-[...$("#deckDots").children].forEach((d) => d.addEventListener("click", () => {
-  clearTimeout(deckTimer);
-  goWish(+d.dataset.i);
-}));
+[...$("#deckDots").children].forEach((d) => d.addEventListener("click", () => goWish(+d.dataset.i)));
 
 function showFinale() {
   running = false;
@@ -943,15 +965,14 @@ $("#cake").addEventListener("click", () => {
   c.classList.add("blown");
   $("#cakeHint").textContent = "Điều ước của em chắc chắn sẽ thành hiện thực! 🌟";
   confetti.burst(180);
-  [...$("#deckDots").children].forEach((d) => (d.disabled = false));
-  // lời chúc bố mẹ hiện ngay ở giữa, thay chỗ lời chúc của anh Long
-  setTimeout(() => { goWish(1); confetti.burst(100); }, 600);
-  // khoảng 3 giây sau khi lời chúc bố mẹ hiện: pháo hoa nổ khắp trang
-  fwTimer = setTimeout(() => fireworks.show(FIREWORKS_MS), 600 + 3000);
-  // sau đó lời chúc đại gia đình trượt từ phải sang thế chỗ
-  deckTimer = setTimeout(() => { goWish(2); confetti.burst(120); }, 600 + FAMILY_DELAY);
+  // bánh thu nhỏ xuống dưới, nhường chỗ cho các lời chúc
+  const at = (ms, fn) => seqTimers.push(setTimeout(fn, ms));
+  at(450, () => { finale.classList.add("wishing"); requestAnimationFrame(() => goWish(0)); });  // bố mẹ
+  at(450 + WISH_STEP_MS, () => goWish(1));                                                     // đại gia đình
+  at(450 + WISH_STEP_MS * 2, () => goWish(2));                                                 // anh Long
+  at(450 + WISH_STEP_MS * 3, () => fireworks.show(FIREWORKS_MS));                              // pháo hoa cả màn hình
 });
-$("#confettiBtn").addEventListener("click", () => confetti.burst(220));
+$("#confettiBtn").addEventListener("click", () => fireworks.show(FIREWORKS_MS));
 $("#replayBtn").addEventListener("click", () => {
   finale.classList.add("hidden");
   finale.classList.remove("go");
@@ -1191,7 +1212,7 @@ const confetti = (() => {
 const fireworks = (() => {
   const veil = document.createElement("div");
   veil.className = "fw-veil";
-  veil.innerHTML = '<div class="flash"></div>';
+  veil.innerHTML = '<div class="flash"></div><div class="fw-msg">Happy Birthday<span>Mai Tuấn Giang 🎂</span></div>';
   const flashEl = veil.firstChild;
   const cv = document.createElement("canvas");
   cv.id = "fireworks";
