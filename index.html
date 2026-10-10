@@ -76,6 +76,16 @@
 
   canvas#confetti { position: fixed; inset: 0; z-index: 30; pointer-events: none; }
 
+  /* Pháo hoa: màn đêm phủ nhẹ cả trang + canvas pháo hoa ở trên cùng */
+  .fw-veil {
+    position: fixed; inset: 0; z-index: 25; pointer-events: none; opacity: 0;
+    background: radial-gradient(130% 100% at 50% 100%, rgba(38, 18, 78, .9), rgba(6, 5, 22, .94));
+    transition: opacity 1.2s ease;
+  }
+  .fw-veil.on { opacity: 1; }
+  .fw-veil .flash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+  canvas#fireworks { position: fixed; inset: 0; z-index: 26; pointer-events: none; }
+
   /* ---------- Màn hình mở đầu ---------- */
   .screen {
     position: fixed; inset: 0; z-index: 10;
@@ -870,8 +880,9 @@ window.addEventListener("keydown", (e) => {
    0 = anh Long, 1 = bố mẹ (phóng ra ở giữa), 2 = đại gia đình (trượt từ phải sang) */
 const DECK = [$("#longWish"), $("#parentWish"), $("#familyWish")];
 const IN_FROM = ["in-zoom", "in-zoom", "in-right"];
-const FAMILY_DELAY = 9000;   // thời gian đọc lời chúc bố mẹ trước khi đại gia đình trượt vào
-let deckIdx = 0, deckTimer = null;
+const FAMILY_DELAY = 11500;  // lời chúc bố mẹ -> (pháo hoa) -> đại gia đình trượt vào sau khi pháo hoa tàn
+const FIREWORKS_MS = 7000;   // thời lượng màn pháo hoa
+let deckIdx = 0, deckTimer = null, fwTimer = null;
 
 function goWish(n) {
   if (n === deckIdx) return;
@@ -894,6 +905,8 @@ function goWish(n) {
 
 function resetDeck() {
   clearTimeout(deckTimer);
+  clearTimeout(fwTimer);
+  fireworks.stop();
   DECK.forEach((c, k) => {
     c.style.transition = "none";
     c.classList.remove("is-active", "out-zoom", "out-left", "in-zoom", "in-right");
@@ -933,6 +946,8 @@ $("#cake").addEventListener("click", () => {
   [...$("#deckDots").children].forEach((d) => (d.disabled = false));
   // lời chúc bố mẹ hiện ngay ở giữa, thay chỗ lời chúc của anh Long
   setTimeout(() => { goWish(1); confetti.burst(100); }, 600);
+  // khoảng 3 giây sau khi lời chúc bố mẹ hiện: pháo hoa nổ khắp trang
+  fwTimer = setTimeout(() => fireworks.show(FIREWORKS_MS), 600 + 3000);
   // sau đó lời chúc đại gia đình trượt từ phải sang thế chỗ
   deckTimer = setTimeout(() => { goWish(2); confetti.burst(120); }, 600 + FAMILY_DELAY);
 });
@@ -1109,6 +1124,9 @@ const music = (() => {
       nextStart += LOOP_BEATS * BEAT;
       setTimeout(() => soundBtn.classList.remove("playing"), Math.max(0, (nextStart - ctx.currentTime + 1) * 1000));
     },
+    // cho hiệu ứng âm thanh khác (pháo hoa) dùng chung AudioContext
+    audio() { if (ctx) ctx.resume(); return ctx; },
+    isMuted() { return muted; },
     toggle() {
       muted = !muted;
       if (mode === "mp3" && mp3) mp3.volume = muted ? 0 : 1;
@@ -1165,6 +1183,237 @@ const confetti = (() => {
     if (!raf) cx.clearRect(0, 0, W, H);
   }
   return { burst };
+})();
+
+/* =========================================================
+   PHÁO HOA (hình ảnh + âm thanh tự tổng hợp)
+   ========================================================= */
+const fireworks = (() => {
+  const veil = document.createElement("div");
+  veil.className = "fw-veil";
+  veil.innerHTML = '<div class="flash"></div>';
+  const flashEl = veil.firstChild;
+  const cv = document.createElement("canvas");
+  cv.id = "fireworks";
+  document.body.append(veil, cv);
+  const cx = cv.getContext("2d");
+
+  const PALETTES = [
+    ["#ff4d6d", "#ff8fa3", "#ffd6de"], ["#4dabf7", "#a5d8ff", "#ffffff"], ["#ffd43b", "#ffa94d", "#fff3bf"],
+    ["#b197fc", "#e599f7", "#ffffff"], ["#69db7c", "#c0eb75", "#ffffff"], ["#ff922b", "#ffd8a8", "#ffe066"],
+    ["#22b8cf", "#99e9f2", "#e599f7"],
+  ];
+  const G = 0.12;               // trọng lực kéo pháo khi bay lên (px/frame²)
+  let W = 0, H = 0, dpr = 1;
+  let rockets = [], sparks = [], raf = null, launchTimers = [], active = false;
+
+  const resize = () => {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = innerWidth; H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    cv.style.width = W + "px"; cv.style.height = H + "px";
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  resize(); addEventListener("resize", resize);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = (arr) => arr[(Math.random() * arr.length) | 0];
+  const scale = () => Math.min(1.25, Math.max(.6, Math.min(W, H) / 700));   // nhỏ lại trên điện thoại
+
+  /* ---------- Âm thanh ---------- */
+  let noiseBuf = null, out = null;
+  function audio() {
+    const ctx = music.audio();
+    if (!ctx || music.isMuted()) return null;
+    if (!out) {
+      out = ctx.createGain(); out.gain.value = .75;
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -14; comp.ratio.value = 6;
+      out.connect(comp); comp.connect(ctx.destination);
+      noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    return ctx;
+  }
+  function panner(ctx, x) {
+    if (!ctx.createStereoPanner) return out;
+    const p = ctx.createStereoPanner();
+    p.pan.value = Math.max(-1, Math.min(1, (x / W) * 2 - 1)) * .7;
+    p.connect(out);
+    return p;
+  }
+  // tiếng rít khi pháo bay lên
+  function whistle(x, dur) {
+    const ctx = audio(); if (!ctx) return;
+    const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(rand(500, 700), t);
+    o.frequency.exponentialRampToValueAtTime(rand(1500, 2100), t + dur);
+    g.gain.setValueAtTime(.0001, t);
+    g.gain.exponentialRampToValueAtTime(.035, t + .08);
+    g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    // tiếng "xì" của thuốc pháo
+    const n = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), ng = ctx.createGain();
+    n.buffer = noiseBuf; hp.type = "highpass"; hp.frequency.value = 3000;
+    ng.gain.setValueAtTime(.05, t); ng.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    const dst = panner(ctx, x);
+    o.connect(g); g.connect(dst); n.connect(hp); hp.connect(ng); ng.connect(dst);
+    o.start(t); o.stop(t + dur + .05); n.start(t, rand(0, 1)); n.stop(t + dur + .05);
+  }
+  // tiếng nổ: tiếng "bùm" trầm + tiếng nổ giòn + vang
+  function boom(x, size) {
+    const ctx = audio(); if (!ctx) return;
+    const t = ctx.currentTime + .03, dst = panner(ctx, x);
+    const n = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
+    n.buffer = noiseBuf; lp.type = "lowpass";
+    lp.frequency.setValueAtTime(2600 * size, t);
+    lp.frequency.exponentialRampToValueAtTime(160, t + 1.4);
+    g.gain.setValueAtTime(.0001, t);
+    g.gain.exponentialRampToValueAtTime(.9 * size, t + .006);
+    g.gain.exponentialRampToValueAtTime(.25 * size, t + .12);
+    g.gain.exponentialRampToValueAtTime(.0001, t + 2);
+    n.connect(lp); lp.connect(g); g.connect(dst);
+    n.start(t, rand(0, 1)); n.stop(t + 2.1);
+    const o = ctx.createOscillator(), og = ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(38, t + .5);
+    og.gain.setValueAtTime(.0001, t);
+    og.gain.exponentialRampToValueAtTime(1.1 * size, t + .01);
+    og.gain.exponentialRampToValueAtTime(.0001, t + .7);
+    o.connect(og); og.connect(dst); o.start(t); o.stop(t + .75);
+  }
+  // tiếng lách tách của kim tuyến
+  function crackle(x, count, delay) {
+    const ctx = audio(); if (!ctx) return;
+    const dst = panner(ctx, x);
+    for (let i = 0; i < count; i++) {
+      const t = ctx.currentTime + delay + rand(0, 1.1);
+      const n = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+      n.buffer = noiseBuf; bp.type = "bandpass"; bp.frequency.value = rand(2500, 6000); bp.Q.value = 1.2;
+      const v = rand(.08, .25);
+      g.gain.setValueAtTime(.0001, t);
+      g.gain.exponentialRampToValueAtTime(v, t + .002);
+      g.gain.exponentialRampToValueAtTime(.0001, t + rand(.02, .06));
+      n.connect(bp); bp.connect(g); g.connect(dst);
+      n.start(t, rand(0, 1.5)); n.stop(t + .08);
+    }
+  }
+
+  /* ---------- Hình ảnh ---------- */
+  function launch(big) {
+    const s = scale();
+    const tx = rand(.12, .88) * W, ty = rand(.1, .42) * H;
+    const x0 = tx + rand(-.08, .08) * W;
+    const vy = -Math.sqrt(2 * G * (H - ty));          // vừa đủ lực bay tới độ cao ty
+    const frames = -vy / G;
+    rockets.push({ x: x0, y: H + 10, vx: (tx - x0) / frames, vy, trail: [], big, s, pal: pick(PALETTES) });
+    whistle(x0, frames / 60);
+  }
+
+  function explode(r) {
+    const s = r.s, pal = r.pal;
+    const type = r.big ? pick(["peony", "heart", "ring", "willow"]) : pick(["peony", "peony", "ring", "willow", "glitter"]);
+    const N = (type === "ring" ? 70 : r.big ? 170 : 120);
+    const speed = (r.big ? 7.6 : 6) * s;
+    for (let i = 0; i < N; i++) {
+      let vx, vy;
+      if (type === "ring") {
+        const a = (i / N) * Math.PI * 2; vx = Math.cos(a) * speed; vy = Math.sin(a) * speed * .55;
+      } else if (type === "heart") {
+        const a = (i / N) * Math.PI * 2;
+        vx = 16 * Math.pow(Math.sin(a), 3) / 16 * speed;
+        vy = -(13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a)) / 16 * speed;
+      } else {
+        // phân bố đều trên mặt cầu rồi chiếu xuống 2D -> trông như quả cầu 3D thật
+        const u = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, k = Math.sqrt(1 - u * u);
+        const sp = speed * rand(.85, 1.05);
+        vx = Math.cos(a) * k * sp; vy = Math.sin(a) * k * sp;
+      }
+      const willow = type === "willow";
+      sparks.push({
+        x: r.x, y: r.y, px: r.x, py: r.y, vx, vy,
+        color: willow ? pick(["#ffd43b", "#ffc078", "#fff3bf"]) : pick(pal),
+        life: 1, decay: willow ? rand(.006, .009) : rand(.012, .02),
+        drag: willow ? .965 : .955, grav: willow ? .045 : .03,
+        w: (willow ? 1.6 : 2.2) * s, glitter: type === "glitter" || Math.random() < .12,
+      });
+    }
+    // ánh chớp lúc nổ
+    sparks.push({ flash: true, x: r.x, y: r.y, life: 1, decay: .08, rad: 110 * s * (r.big ? 1.4 : 1), color: pal[0] });
+    flashEl.animate([{ opacity: r.big ? .16 : .08 }, { opacity: 0 }], { duration: 380, easing: "ease-out" });
+    boom(r.x, r.big ? 1 : .75);
+    if (type === "glitter" || type === "willow" || Math.random() < .4) crackle(r.x, type === "glitter" ? 26 : 12, .35);
+  }
+
+  function tick() {
+    // xoá mờ dần frame cũ -> để lại vệt sáng như pháo hoa thật
+    cx.globalCompositeOperation = "destination-out";
+    cx.fillStyle = "rgba(0,0,0,0.22)";
+    cx.fillRect(0, 0, W, H);
+    cx.globalCompositeOperation = "lighter";
+
+    rockets = rockets.filter((r) => {
+      r.trail.push([r.x, r.y]); if (r.trail.length > 10) r.trail.shift();
+      r.x += r.vx; r.y += r.vy; r.vy += G;
+      cx.strokeStyle = "rgba(255,220,170,.85)"; cx.lineWidth = 2.2 * r.s; cx.lineCap = "round";
+      cx.beginPath(); cx.moveTo(r.trail[0][0], r.trail[0][1]); cx.lineTo(r.x, r.y); cx.stroke();
+      cx.fillStyle = "#fff"; cx.beginPath(); cx.arc(r.x, r.y, 2.2 * r.s, 0, 7); cx.fill();
+      if (Math.random() < .5) sparks.push({ x: r.x, y: r.y, px: r.x, py: r.y, vx: rand(-.4, .4), vy: rand(.5, 1.5), color: "#ffc078", life: .6, decay: .04, drag: .95, grav: .02, w: 1.2 * r.s });
+      if (r.vy >= -0.4) { explode(r); return false; }
+      return true;
+    });
+
+    sparks = sparks.filter((p) => {
+      p.life -= p.decay;
+      if (p.life <= 0) return false;
+      if (p.flash) {
+        const g = cx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.rad);
+        g.addColorStop(0, `rgba(255,255,255,${.55 * p.life})`);
+        g.addColorStop(.3, hexA(p.color, .35 * p.life));
+        g.addColorStop(1, "rgba(0,0,0,0)");
+        cx.fillStyle = g; cx.fillRect(p.x - p.rad, p.y - p.rad, p.rad * 2, p.rad * 2);
+        return true;
+      }
+      p.px = p.x; p.py = p.y;
+      p.vx *= p.drag; p.vy = p.vy * p.drag + p.grav;
+      p.x += p.vx; p.y += p.vy;
+      let a = Math.min(1, p.life * 1.4);
+      if (p.glitter && p.life < .55) a *= Math.random() < .5 ? 1 : .15;   // lấp lánh khi sắp tàn
+      cx.strokeStyle = hexA(p.color, a);
+      cx.lineWidth = p.w * (.5 + p.life * .5);
+      cx.beginPath(); cx.moveTo(p.px, p.py); cx.lineTo(p.x, p.y); cx.stroke();
+      return true;
+    });
+
+    if (rockets.length || sparks.length || active) raf = requestAnimationFrame(tick);
+    else { raf = null; cx.clearRect(0, 0, W, H); veil.classList.remove("on"); }
+  }
+  function hexA(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a.toFixed(3)})`;
+  }
+
+  function show(duration) {
+    stop();
+    active = true;
+    veil.classList.add("on");
+    // nhịp bắn: mở màn vài quả, giữa dày dần, kết thúc bằng loạt lớn cùng lúc
+    let t = 300;
+    while (t < duration - 1600) {
+      const n = Math.random() < .45 ? 2 : 1;
+      for (let k = 0; k < n; k++) launchTimers.push(setTimeout(() => launch(Math.random() < .3), t + k * 140));
+      t += rand(320, 600);
+    }
+    for (let k = 0; k < 5; k++) launchTimers.push(setTimeout(() => launch(true), duration - 1400 + k * 110));
+    launchTimers.push(setTimeout(() => { active = false; }, duration));
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+  function stop() {
+    launchTimers.forEach(clearTimeout); launchTimers = [];
+    active = false; rockets = []; sparks = [];
+    veil.classList.remove("on");
+  }
+  return { show, stop };
 })();
 </script>
 </body>
